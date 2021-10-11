@@ -24,35 +24,45 @@ var depositCmd = &cobra.Command{
 		txFabric := evmtransaction.NewTransaction
 		return DepositCmd(cmd, args, txFabric)
 	},
+	Args: func(cmd *cobra.Command, args []string) error {
+		err := validateDepositFlags(cmd, args)
+		if err != nil {
+			return nil
+		}
+	}
 }
 
-func BindDepositCmdFlags(cli *cobra.Command) {
-	cli.Flags().String("recipient", "", "address of recipient")
-	cli.Flags().String("bridge", "", "address of bridge contract")
-	cli.Flags().String("amount", "", "amount to deposit")
-	cli.Flags().String("destId", "", "destination domain ID")
-	cli.Flags().String("resourceId", "", "resource ID for transfer")
-	cli.Flags().Uint64("decimals", 0, "ERC20 token decimals")
-	err := cli.MarkFlagRequired("decimals")
-	if err != nil {
-		panic(err)
+func validateDepositFlags(cmd *cobra.Command, args []string) error {
+	if !common.IsHexAddress(Recipient) {
+		return fmt.Errorf("invalid recipient address %s", Recipient)
+	}
+	if !common.IsHexAddress(bridgeAddress) {
+		return fmt.Errorf("invalid bridge address %s", bridgeAddress)
 	}
 }
 
 func init() {
-	BindDepositCmdFlags(depositCmd)
+	depositCmd.Flags().StringVarP(&Recipient, "recipient", "r", "", "address of recipient")
+	depositCmd.Flags().StringVarP(&Bridge, "bridge", "b", "", "address of bridge contract")
+	depositCmd.Flags().StringVarP(&Amount, "amount", "a", "", "amount to deposit")
+	depositCmd.Flags().StringVarP(&DestinationID, "destId", "did", "", "destination domain ID")
+	depositCmd.Flags().StringVarP(&ResourceID, "resourceId", "rid", "", "resource ID for transfer")
+	depositCmd.Flags().IntVarP(&Decimals, "decimals", "r", 0, "ERC20 token decimals")
+	depositCmd.MarkFlagRequired("decimals")
+
 }
 
+var (
+	Recipient     string
+	Bridge        string
+	Amount        string
+	DestinationID string
+	ResourceID    string
+	Decimals      int
+)
+
 func DepositCmd(cmd *cobra.Command, args []string, txFabric calls.TxFabric) error {
-	recipient := cmd.Flag("recipient").Value.String()
-	bridgeAddress := cmd.Flag("bridge").Value.String()
-	amount := cmd.Flag("amount").Value.String()
-	destinationId := cmd.Flag("destId").Value.String()
-	resourceId := cmd.Flag("resourceId").Value.String()
-	if !common.IsHexAddress(recipient) {
-		return fmt.Errorf("invalid recipient address %s", recipient)
-	}
-	recipientAddress := common.HexToAddress(recipient)
+	recipientAddress := common.HexToAddress(Recipient)
 	// fetch global flag values
 	url, gasLimit, gasPrice, senderKeyPair, err := flags.GlobalFlagValues(cmd)
 	if err != nil {
