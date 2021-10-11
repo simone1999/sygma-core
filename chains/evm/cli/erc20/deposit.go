@@ -16,6 +16,15 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var (
+	Recipient     string
+	Bridge        string
+	Amount        string
+	DestinationID string
+	ResourceID    string
+	Decimals      int
+)
+
 var depositCmd = &cobra.Command{
 	Use:   "deposit",
 	Short: "Initiate a transfer of ERC20 tokens",
@@ -25,20 +34,22 @@ var depositCmd = &cobra.Command{
 		return DepositCmd(cmd, args, txFabric)
 	},
 	Args: func(cmd *cobra.Command, args []string) error {
-		err := validateDepositFlags(cmd, args)
+		err := validateFlags(cmd, args)
 		if err != nil {
-			return nil
+			return err
 		}
-	}
+		return nil
+	},
 }
 
-func validateDepositFlags(cmd *cobra.Command, args []string) error {
+func validateFlags(cmd *cobra.Command, args []string) error {
 	if !common.IsHexAddress(Recipient) {
 		return fmt.Errorf("invalid recipient address %s", Recipient)
 	}
-	if !common.IsHexAddress(bridgeAddress) {
-		return fmt.Errorf("invalid bridge address %s", bridgeAddress)
+	if !common.IsHexAddress(Bridge) {
+		return fmt.Errorf("invalid bridge address %s", Bridge)
 	}
+	return nil
 }
 
 func init() {
@@ -52,15 +63,6 @@ func init() {
 
 }
 
-var (
-	Recipient     string
-	Bridge        string
-	Amount        string
-	DestinationID string
-	ResourceID    string
-	Decimals      int
-)
-
 func DepositCmd(cmd *cobra.Command, args []string, txFabric calls.TxFabric) error {
 	recipientAddress := common.HexToAddress(Recipient)
 	// fetch global flag values
@@ -69,20 +71,11 @@ func DepositCmd(cmd *cobra.Command, args []string, txFabric calls.TxFabric) erro
 		return fmt.Errorf("could not get global flags: %v", err)
 	}
 
-	// ignore success bool
-	decimals, _ := big.NewInt(0).SetString(cmd.Flag("decimals").Value.String(), 10)
+	decimals := big.NewInt(int64(Decimals))
 
-	if !common.IsHexAddress(bridgeAddress) {
-		return fmt.Errorf("invalid bridge address %s", bridgeAddress)
-	}
+	bridgeAddr := common.HexToAddress(Bridge)
 
-	bridgeAddr := common.HexToAddress(bridgeAddress)
-
-	if !common.IsHexAddress(recipient) {
-		return fmt.Errorf("invalid recipient address %s", recipientAddress)
-	}
-
-	realAmount, err := calls.UserAmountToWei(amount, decimals)
+	realAmount, err := calls.UserAmountToWei(Amount, decimals)
 	if err != nil {
 		return err
 	}
@@ -93,16 +86,16 @@ func DepositCmd(cmd *cobra.Command, args []string, txFabric calls.TxFabric) erro
 		return err
 	}
 
-	if resourceId[0:2] == "0x" {
-		resourceId = resourceId[2:]
+	if ResourceID[0:2] == "0x" {
+		ResourceID = ResourceID[2:]
 	}
-	resourceIdBytes, err := hex.DecodeString(resourceId)
+	resourceIdBytes, err := hex.DecodeString(ResourceID)
 	if err != nil {
 		return err
 	}
 	resourceIdBytesArr := calls.SliceTo32Bytes(resourceIdBytes)
 
-	destinationIdInt, err := strconv.Atoi(destinationId)
+	destinationIdInt, err := strconv.Atoi(DestinationID)
 	if err != nil {
 		log.Error().Err(fmt.Errorf("destination ID conversion error: %v", err))
 		return err
@@ -132,6 +125,6 @@ func DepositCmd(cmd *cobra.Command, args []string, txFabric calls.TxFabric) erro
 
 	log.Debug().Msgf("erc20 deposit hash: %s", txHash.Hex())
 
-	log.Info().Msgf("%s tokens were transferred to %s from %s", amount, recipientAddress.Hex(), senderKeyPair.CommonAddress().String())
+	log.Info().Msgf("%s tokens were transferred to %s from %s", Amount, recipientAddress.Hex(), senderKeyPair.CommonAddress().String())
 	return nil
 }
