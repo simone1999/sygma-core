@@ -1,19 +1,17 @@
 package bridge
 
 import (
-	"math/big"
-
 	"github.com/ChainSafe/chainbridge-core/crypto/secp256k1"
 	"github.com/ChainSafe/chainbridge-core/types"
 	"github.com/ethereum/go-ethereum/common"
+	"math/big"
 )
 
 //flag vars
 var (
 	Bridge          string
 	DataHash        string
-	Data            string
-	DomainID        uint64
+	DomainID        uint8
 	DepositNonce    uint64
 	Handler         string
 	ResourceID      string
@@ -34,7 +32,6 @@ var (
 	tokenContractAddr  common.Address
 	depositSigBytes    [4]byte
 	executeSigBytes    [4]byte
-	dataBytes          []byte
 )
 
 // global flags

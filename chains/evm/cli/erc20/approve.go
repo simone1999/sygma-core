@@ -2,10 +2,10 @@ package erc20
 
 import (
 	"errors"
+	callsUtil "github.com/ChainSafe/chainbridge-core/chains/evm/calls"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/contracts/erc20"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/evmtransaction"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/transactor"
-	util2 "github.com/ChainSafe/chainbridge-core/chains/evm/calls/util"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/initialize"
 	"github.com/ChainSafe/chainbridge-core/util"
 	"math/big"
@@ -19,8 +19,8 @@ import (
 
 var approveCmd = &cobra.Command{
 	Use:   "approve",
-	Short: "Approve tokens in an ERC20 contract for transfer",
-	Long:  "Approve tokens in an ERC20 contract for transfer",
+	Short: "Approve an ERC20 tokens",
+	Long:  "The approve subcommand approves tokens in an ERC20 contract for transfer",
 	PreRun: func(cmd *cobra.Command, args []string) {
 		logger.LoggerMetadata(cmd.Name(), cmd.Flags())
 	},
@@ -50,11 +50,11 @@ var approveCmd = &cobra.Command{
 }
 
 func BindApproveCmdFlags(cmd *cobra.Command) {
-	cmd.Flags().StringVar(&Erc20Address, "erc20Address", "", "ERC20 contract address")
-	cmd.Flags().StringVar(&Amount, "amount", "", "amount to grant allowance")
-	cmd.Flags().StringVar(&Recipient, "recipient", "", "address of recipient")
+	cmd.Flags().StringVar(&Erc20Address, "contract", "", "ERC20 contract address")
+	cmd.Flags().StringVar(&Amount, "amount", "", "Amount to grant allowance")
+	cmd.Flags().StringVar(&Recipient, "recipient", "", "Recipient address")
 	cmd.Flags().Uint64Var(&Decimals, "decimals", 0, "ERC20 token decimals")
-	flags.MarkFlagsAsRequired(cmd, "erc20Address", "amount", "recipient", "decimals")
+	flags.MarkFlagsAsRequired(cmd, "contract", "amount", "recipient", "decimals")
 }
 
 func init() {
@@ -77,7 +77,7 @@ func ProcessApproveFlags(cmd *cobra.Command, args []string) error {
 	decimals := big.NewInt(int64(Decimals))
 	erc20Addr = common.HexToAddress(Erc20Address)
 	recipientAddress = common.HexToAddress(Recipient)
-	realAmount, err = util2.UserAmountToWei(Amount, decimals)
+	realAmount, err = callsUtil.UserAmountToWei(Amount, decimals)
 	if err != nil {
 		return err
 	}

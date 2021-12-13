@@ -3,10 +3,9 @@ package contracts
 import (
 	"context"
 	"fmt"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/client"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/consts"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/transactor"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/util"
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
@@ -18,7 +17,7 @@ type Contract struct {
 	contractAddress common.Address
 	ABI             abi.ABI
 	bytecode        []byte
-	client          client.ContractCallerDispatcherClient
+	client          calls.ContractCallerDispatcher
 	transactor.Transactor
 }
 
@@ -26,7 +25,7 @@ func NewContract(
 	contractAddress common.Address,
 	abi abi.ABI,
 	bytecode []byte,
-	client client.ContractCallerDispatcherClient,
+	client calls.ContractCallerDispatcher,
 	transactor transactor.Transactor,
 ) Contract {
 	return Contract{
@@ -86,7 +85,7 @@ func (c *Contract) CallContract(method string, args ...interface{}) ([]interface
 		return nil, err
 	}
 	msg := ethereum.CallMsg{From: c.client.From(), To: &c.contractAddress, Data: input}
-	out, err := c.client.CallContract(context.TODO(), util.ToCallArg(msg), nil)
+	out, err := c.client.CallContract(context.TODO(), calls.ToCallArg(msg), nil)
 	if err != nil {
 		log.Error().
 			Str("contract", c.contractAddress.String()).

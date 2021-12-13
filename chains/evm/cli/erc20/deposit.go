@@ -2,11 +2,10 @@ package erc20
 
 import (
 	"fmt"
+	callsUtil "github.com/ChainSafe/chainbridge-core/chains/evm/calls"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/contracts/bridge"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/contracts/deposit"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/evmtransaction"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/transactor"
-	util2 "github.com/ChainSafe/chainbridge-core/chains/evm/calls/util"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/initialize"
 	"github.com/ChainSafe/chainbridge-core/util"
 	"math/big"
@@ -20,8 +19,8 @@ import (
 
 var depositCmd = &cobra.Command{
 	Use:   "deposit",
-	Short: "Initiate a transfer of ERC20 tokens",
-	Long:  "Initiate a transfer of ERC20 tokens",
+	Short: "Deposit an ERC20 token",
+	Long:  "The deposit subcommand creates a new ERC20 token deposit on the bridge contract",
 	PreRun: func(cmd *cobra.Command, args []string) {
 		logger.LoggerMetadata(cmd.Name(), cmd.Flags())
 	},
@@ -58,13 +57,13 @@ func init() {
 }
 
 func BindDepositCmdFlags(cmd *cobra.Command) {
-	cmd.Flags().StringVar(&Recipient, "recipient", "", "address of recipient")
-	cmd.Flags().StringVar(&Bridge, "bridge", "", "address of bridge contract")
-	cmd.Flags().StringVar(&Amount, "amount", "", "amount to deposit")
-	cmd.Flags().Uint64Var(&DomainID, "domainId", 0, "destination domain ID")
-	cmd.Flags().StringVar(&ResourceID, "resourceId", "", "resource ID for transfer")
+	cmd.Flags().StringVar(&Recipient, "recipient", "", "Address of recipient")
+	cmd.Flags().StringVar(&Bridge, "bridge", "", "Address of bridge contract")
+	cmd.Flags().StringVar(&Amount, "amount", "", "Amount to deposit")
+	cmd.Flags().Uint8Var(&DomainID, "domain", 0, "Destination domain ID")
+	cmd.Flags().StringVar(&ResourceID, "resource", "", "Resource ID for transfer")
 	cmd.Flags().Uint64Var(&Decimals, "decimals", 0, "ERC20 token decimals")
-	flags.MarkFlagsAsRequired(cmd, "recipient", "bridge", "amount", "domainId", "resourceId", "decimals")
+	flags.MarkFlagsAsRequired(cmd, "recipient", "bridge", "amount", "domain", "resource", "decimals")
 }
 
 func ValidateDepositFlags(cmd *cobra.Command, args []string) error {
@@ -83,7 +82,7 @@ func ProcessDepositFlags(cmd *cobra.Command, args []string) error {
 	recipientAddress = common.HexToAddress(Recipient)
 	decimals := big.NewInt(int64(Decimals))
 	bridgeAddr = common.HexToAddress(Bridge)
-	realAmount, err = util2.UserAmountToWei(Amount, decimals)
+	realAmount, err = callsUtil.UserAmountToWei(Amount, decimals)
 	if err != nil {
 		return err
 	}
@@ -92,9 +91,9 @@ func ProcessDepositFlags(cmd *cobra.Command, args []string) error {
 }
 
 func DepositCmd(cmd *cobra.Command, args []string, contract *bridge.BridgeContract) error {
-	data := deposit.ConstructErc20DepositData(recipientAddress.Bytes(), realAmount)
-	hash, err := contract.Deposit(
-		resourceIdBytesArr, uint8(DomainID), data, transactor.TransactOptions{GasLimit: gasLimit},
+	hash, err := contract.Erc20Deposit(
+		recipientAddress, realAmount, resourceIdBytesArr,
+		uint8(DomainID), transactor.TransactOptions{GasLimit: gasLimit},
 	)
 	if err != nil {
 		log.Error().Err(fmt.Errorf("erc20 deposit error: %v", err))

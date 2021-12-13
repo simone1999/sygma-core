@@ -2,16 +2,15 @@ package bridge
 
 import (
 	"bytes"
-	"math/big"
-	"strconv"
-	"strings"
-
-	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/client"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/consts"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/contracts"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/contracts/deposit"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/transactor"
 	"github.com/ethereum/go-ethereum/common/hexutil"
+	"math/big"
+	"strconv"
+	"strings"
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm/voter/proposal"
 	"github.com/ChainSafe/chainbridge-core/relayer/message"
@@ -26,7 +25,7 @@ type BridgeContract struct {
 }
 
 func NewBridgeContract(
-	client client.ContractCallerDispatcherClient,
+	client calls.ContractCallerDispatcher,
 	bridgeContractAddress common.Address,
 	transactor transactor.Transactor,
 ) *BridgeContract {
@@ -116,7 +115,7 @@ func (c *BridgeContract) SetBurnableInput(
 	)
 }
 
-func (c *BridgeContract) Deposit(
+func (c *BridgeContract) deposit(
 	resourceID types.ResourceID,
 	destDomainID uint8,
 	data []byte,
@@ -142,7 +141,7 @@ func (c *BridgeContract) Erc20Deposit(
 		Str("amount", amount.String()).
 		Msgf("ERC20 deposit")
 	data := deposit.ConstructErc20DepositData(recipient.Bytes(), amount)
-	txHash, err := c.Deposit(resourceID, destDomainID, data, opts)
+	txHash, err := c.deposit(resourceID, destDomainID, data, opts)
 	if err != nil {
 		log.Error().Err(err)
 		return nil, err
@@ -164,7 +163,7 @@ func (c *BridgeContract) Erc721Deposit(
 		Str("tokenID", tokenId.String()).
 		Msgf("ERC721 deposit")
 	data := deposit.ConstructErc721DepositData(recipient.Bytes(), tokenId, []byte(metadata))
-	txHash, err := c.Deposit(resourceID, destDomainID, data, opts)
+	txHash, err := c.deposit(resourceID, destDomainID, data, opts)
 	if err != nil {
 		log.Error().Err(err)
 		return nil, err
@@ -182,7 +181,7 @@ func (c *BridgeContract) GenericDeposit(
 		Str("resourceID", hexutil.Encode(resourceID[:])).
 		Msgf("Generic deposit")
 	data := deposit.ConstructGenericDepositData(metadata)
-	txHash, err := c.Deposit(resourceID, destDomainID, data, opts)
+	txHash, err := c.deposit(resourceID, destDomainID, data, opts)
 	if err != nil {
 		log.Error().Err(err)
 		return nil, err

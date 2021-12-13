@@ -3,9 +3,9 @@ package centrifuge
 import (
 	"errors"
 	"fmt"
+	callsUtil "github.com/ChainSafe/chainbridge-core/chains/evm/calls"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/contracts/centrifuge"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/evmtransaction"
-	util2 "github.com/ChainSafe/chainbridge-core/chains/evm/calls/util"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/initialize"
 	"github.com/ChainSafe/chainbridge-core/util"
 
@@ -17,9 +17,9 @@ import (
 )
 
 var getHashCmd = &cobra.Command{
-	Use:   "getHash",
-	Short: "Returns if a given hash exists in asset store",
-	Long:  "Checks _assetsStored map on Centrifuge asset store contract to find if asset hash exists.",
+	Use:   "get-hash",
+	Short: "Returns the status of whether a given hash exists in an asset store",
+	Long:  "The get-hash subcommand checks the _assetsStored map on a Centrifuge asset store contract to determine whether the asset hash exists or not",
 	PreRun: func(cmd *cobra.Command, args []string) {
 		logger.LoggerMetadata(cmd.Name(), cmd.Flags())
 	},
@@ -72,7 +72,7 @@ func ValidateGetHashFlags(cmd *cobra.Command, args []string) error {
 
 func ProcessGetHashFlags(cmd *cobra.Command, args []string) error {
 	storeAddr = common.HexToAddress(Address)
-	byteHash = util2.SliceTo32Bytes([]byte(Hash))
+	byteHash = callsUtil.SliceTo32Bytes([]byte(Hash))
 
 	return nil
 }
@@ -80,7 +80,7 @@ func ProcessGetHashFlags(cmd *cobra.Command, args []string) error {
 func GetHashCmd(cmd *cobra.Command, args []string, contract *centrifuge.AssetStoreContract) error {
 	isAssetStored, err := contract.IsCentrifugeAssetStored(byteHash)
 	if err != nil {
-		log.Error().Err(fmt.Errorf("Checking if asset stored failed: %w", err))
+		log.Error().Err(fmt.Errorf("checking if asset stored failed: %w", err))
 		return err
 	}
 

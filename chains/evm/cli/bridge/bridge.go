@@ -2,15 +2,14 @@ package bridge
 
 import (
 	"fmt"
-
 	"github.com/ChainSafe/chainbridge-core/chains/evm/cli/flags"
 	"github.com/spf13/cobra"
 )
 
 var BridgeCmd = &cobra.Command{
 	Use:   "bridge",
-	Short: "Bridge-related instructions",
-	Long:  "Bridge-related instructions",
+	Short: "Set of commands for interacting with a bridge",
+	Long:  "Set of commands for interacting with a bridge",
 	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 		var err error
 		// fetch global flag values
@@ -29,5 +28,4 @@ func init() {
 	BridgeCmd.AddCommand(registerGenericResourceCmd)
 	BridgeCmd.AddCommand(registerResourceCmd)
 	BridgeCmd.AddCommand(setBurnCmd)
-	BridgeCmd.AddCommand(voteProposalCmd)
 }

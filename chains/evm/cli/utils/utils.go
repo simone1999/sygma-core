@@ -2,7 +2,7 @@ package utils
 
 import (
 	"errors"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/client"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/evmgaspricer"
 	gomath "math"
 	"math/big"
@@ -16,8 +16,8 @@ import (
 
 var UtilsCmd = &cobra.Command{
 	Use:   "utils",
-	Short: "Utils-related instructions",
-	Long:  "Utils-related instructions",
+	Short: "Set of utility commands",
+	Long:  "Set of utility commands",
 }
 
 func init() {
@@ -71,7 +71,7 @@ func WeiAmountToUser(amount *big.Int, decimals *big.Int) (*big.Float, error) {
 }
 
 type GasPricerWithPostConfig interface {
-	client.GasPricer
+	calls.GasPricer
 	SetClient(client evmgaspricer.LondonGasClient)
 	SetOpts(opts *evmgaspricer.GasPricerOpts)
 }
