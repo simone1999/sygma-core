@@ -2,13 +2,13 @@ package writer
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"time"
 
 	"github.com/ChainSafe/chainbridge-core/chains/substrate"
-	"github.com/ChainSafe/chainbridge-core/relayer/message"
-	"github.com/ChainSafe/chainbridge-core/types"
-	substrateTypes "github.com/centrifuge/go-substrate-rpc-client/types"
+	"github.com/ChainSafe/chainbridge-core/relayer"
+	"github.com/centrifuge/go-substrate-rpc-client/types"
 	"github.com/rs/zerolog/log"
 )
 
@@ -21,41 +21,42 @@ var AcknowledgeProposal = BridgePalletName + ".acknowledge_proposal"
 
 type Voter interface {
 	SubmitTx(method string, args ...interface{}) error
-	GetVoterAccountID() substrateTypes.AccountID
-	GetMetadata() (meta substrateTypes.Metadata)
-	ResolveResourceId(resourceId types.ResourceID) (string, error)
+	GetVoterAccountID() types.AccountID
+	GetMetadata() (meta types.Metadata)
+	ResolveResourceId(id [32]byte) (string, error)
 	// TODO: Vote state should be higher abstraction
 	GetProposalStatus(sourceID, proposalBytes []byte) (bool, *substrate.VoteState, error)
 }
 
-type ProposalHandler func(msg *message.Message) []interface{}
-type ProposalHandlers map[message.TransferType]ProposalHandler
+type ProposalHandler func(msg *relayer.Message) []interface{}
+type ProposalHandlers map[relayer.TransferType]ProposalHandler
 
 type SubstrateWriter struct {
-	client   Voter
-	handlers ProposalHandlers
-	domainID uint8
+	client     Voter
+	handlers   ProposalHandlers
+	chainID    uint8
+	extendCall bool
 }
 
-func NewSubstrateWriter(domainID uint8, client Voter) *SubstrateWriter {
-	return &SubstrateWriter{domainID: domainID, client: client}
+func NewSubstrateWriter(chainID uint8, client Voter, extendCall bool) *SubstrateWriter {
+	return &SubstrateWriter{chainID: chainID, client: client, extendCall: extendCall}
 }
 
-func (w *SubstrateWriter) RegisterHandler(t message.TransferType, handler ProposalHandler) {
+func (w *SubstrateWriter) RegisterHandler(t relayer.TransferType, handler ProposalHandler) {
 	if w.handlers == nil {
-		w.handlers = make(map[message.TransferType]ProposalHandler)
+		w.handlers = make(map[relayer.TransferType]ProposalHandler)
 	}
 	w.handlers[t] = handler
 }
 
-func (w *SubstrateWriter) VoteProposal(m *message.Message) error {
+func (w *SubstrateWriter) VoteProposal(m *relayer.Message) error {
 	handler, ok := w.handlers[m.Type]
 	if !ok {
-		return fmt.Errorf("no corresponding substrate handler found for message type %s", m.Type)
+		return errors.New(fmt.Sprintf("no corresponding substrate handler found for message type %s", m.Type))
 	}
 	prop, err := w.createProposal(m.Source, m.DepositNonce, m.ResourceId, handler(m)...)
 	if err != nil {
-		return fmt.Errorf("failed to construct proposal (chain=%d, name=%v) Error: %w", m.Destination, w.domainID, err)
+		return fmt.Errorf("failed to construct proposal (chain=%d, name=%v) Error: %w", m.Destination, w.chainID, err)
 	}
 
 	for i := 0; i < BlockRetryLimit; i++ {
@@ -76,7 +77,7 @@ func (w *SubstrateWriter) VoteProposal(m *message.Message) error {
 			}
 			return nil
 		} else {
-			log.Info().Str("reason", reason).Uint64("nonce", uint64(prop.DepositNonce)).Uint8("source", uint8(prop.SourceId)).Str("resource", substrateTypes.HexEncodeToString(prop.ResourceId[:])).Msg("Ignoring proposal")
+			log.Info().Str("reason", reason).Uint64("nonce", uint64(prop.DepositNonce)).Uint8("source", uint8(prop.SourceId)).Str("resource", types.HexEncodeToString(prop.ResourceId[:])).Msg("Ignoring proposal")
 			return nil
 		}
 	}
@@ -84,7 +85,7 @@ func (w *SubstrateWriter) VoteProposal(m *message.Message) error {
 }
 
 func (w *SubstrateWriter) proposalValid(prop *SubstrateProposal) (bool, string, error) {
-	srcId, err := substrateTypes.EncodeToBytes(prop.SourceId)
+	srcId, err := types.EncodeToBytes(prop.SourceId)
 	if err != nil {
 		return false, "", err
 	}
@@ -110,13 +111,13 @@ func (w *SubstrateWriter) proposalValid(prop *SubstrateProposal) (bool, string, 
 	}
 }
 
-func (w *SubstrateWriter) createProposal(sourceChain uint8, depositNonce uint64, resourceId types.ResourceID, args ...interface{}) (*SubstrateProposal, error) {
+func (w *SubstrateWriter) createProposal(sourceChain uint8, depositNonce uint64, resourceId [32]byte, args ...interface{}) (*SubstrateProposal, error) {
 	meta := w.client.GetMetadata()
 	method, err := w.client.ResolveResourceId(resourceId)
 	if err != nil {
 		return nil, err
 	}
-	call, err := substrateTypes.NewCall(
+	call, err := types.NewCall(
 		&meta,
 		method,
 		args...,
@@ -125,23 +126,23 @@ func (w *SubstrateWriter) createProposal(sourceChain uint8, depositNonce uint64,
 		return nil, err
 	}
 	// TODO: Is not these should be always enabled?
-	// if w.extendCall {
-	// 	eRID, err := types.EncodeToBytes(resourceId)
-	// 	if err != nil {
-	// 		return nil, err
-	// 	}
-	// 	call.Args = append(call.Args, eRID...)
-	// }
+	if w.extendCall {
+		eRID, err := types.EncodeToBytes(resourceId)
+		if err != nil {
+			return nil, err
+		}
+		call.Args = append(call.Args, eRID...)
+	}
 	return &SubstrateProposal{
-		DepositNonce: substrateTypes.U64(depositNonce),
+		DepositNonce: types.U64(depositNonce),
 		Call:         call,
-		SourceId:     substrateTypes.U8(sourceChain),
-		ResourceId:   substrateTypes.NewBytes32(resourceId),
+		SourceId:     types.U8(sourceChain),
+		ResourceId:   types.NewBytes32(resourceId),
 		Method:       method,
 	}, nil
 }
 
-func containsVote(votes []substrateTypes.AccountID, voter substrateTypes.AccountID) bool {
+func containsVote(votes []types.AccountID, voter types.AccountID) bool {
 	for _, v := range votes {
 		if bytes.Equal(v[:], voter[:]) {
 			return true

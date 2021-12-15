@@ -14,7 +14,6 @@ import (
 
 // The Constant "keys". These are the name that the keys are based on. This can be expanded, but
 // any additions must be added to Keys and to insecureKeyFromAddress
-
 const AliceKey = "alice"
 const BobKey = "bob"
 const CharlieKey = "charlie"
