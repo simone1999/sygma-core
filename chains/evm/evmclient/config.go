@@ -5,27 +5,18 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/ChainSafe/chainbridge-core/config"
+	"github.com/ChainSafe/chainbridge-core/config/chain"
 	"github.com/ChainSafe/chainbridge-core/crypto/secp256k1"
 	"github.com/spf13/viper"
 )
 
-const DefaultGasLimit = 6721975
-const DefaultGasPrice = 20000000000
-const DefaultGasMultiplier = 1
-const DefaultBlockConfirmations = 10
-
 type EVMConfig struct {
-	SharedEVMConfig config.SharedEVMConfig
+	SharedEVMConfig chain.SharedEVMConfig
 	kp              *secp256k1.Keypair
-	EgsApiKey       string // API key for ethgasstation to query gas prices
-	EgsSpeed        string // The speed which a transaction should be processed: average, fast, fastest. Default: fast
 }
 
 type RawEVMConfig struct {
-	config.RawSharedEVMConfig `mapstructure:",squash"`
-	EgsApiKey                 string `mapstructure:"egsApiKey"`
-	EgsSpeed                  string `mapstructure:"egsSpeed"`
+	chain.RawSharedEVMConfig `mapstructure:",squash"`
 }
 
 func NewConfig() *EVMConfig {
@@ -55,7 +46,6 @@ func GetConfig(path string, name string) (*RawEVMConfig, error) {
 }
 
 func ParseConfig(rawConfig *RawEVMConfig) (*EVMConfig, error) {
-
 	cfg, err := rawConfig.RawSharedEVMConfig.ParseConfig()
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse shared evm config, error: %w", err)
@@ -63,8 +53,6 @@ func ParseConfig(rawConfig *RawEVMConfig) (*EVMConfig, error) {
 
 	config := &EVMConfig{
 		SharedEVMConfig: *cfg,
-		EgsApiKey:       "",
-		EgsSpeed:        "",
 	}
 
 	return config, nil
