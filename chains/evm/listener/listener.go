@@ -20,15 +20,8 @@ import (
 var BlockRetryInterval = time.Second * 5
 var BlockDelay = big.NewInt(10) //TODO: move to config
 
-<<<<<<< HEAD
-type DepositLogs struct {
-	DestinationChainID uint8
-	ResourceID         [32]byte
-	DepositNonce       uint64
-=======
 type EventHandler interface {
 	HandleEvent(sourceID, destID uint8, nonce uint64, resourceID types.ResourceID, calldata, handlerResponse []byte) (*message.Message, error)
->>>>>>> develop
 }
 type ChainClient interface {
 	LatestBlock() (*big.Int, error)
@@ -75,11 +68,7 @@ func (l *EVMListener) ListenToEvents(startBlock *big.Int, domainID uint8, kvrw b
 					continue
 				}
 				for _, eventLog := range logs {
-<<<<<<< HEAD
-					m, err := l.eventHandler.HandleEvent(chainID, eventLog.DestinationChainID, eventLog.DepositNonce, eventLog.ResourceID)
-=======
 					m, err := l.eventHandler.HandleEvent(domainID, eventLog.DestinationDomainID, eventLog.DepositNonce, eventLog.ResourceID, eventLog.Data, eventLog.HandlerResponse)
->>>>>>> develop
 					if err != nil {
 						errChn <- err
 						log.Error().Err(err)
