@@ -5,10 +5,11 @@ package app
 
 import (
 	"fmt"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/evmtransaction"
 	"os"
 	"os/signal"
 	"syscall"
+
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/evmtransaction"
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm"
 	"github.com/ChainSafe/chainbridge-core/config"
@@ -31,14 +32,20 @@ func Run() error {
 	if err != nil {
 		panic(err)
 	}
+
+	dbNonce, err := lvldb.NewLvlDB(viper.GetString(flags.NoncestoreFlagName))
+	if err != nil {
+		panic(err)
+	}
 	blockstore := store.NewBlockStore(db)
+	nonceStore := store.NewNonceStore(dbNonce)
 
 	chains := []relayer.RelayedChain{}
 	for _, chainConfig := range configuration.ChainConfigs {
 		switch chainConfig["type"] {
 		case "evm":
 			{
-				chain, err := evm.SetupDefaultEVMChain(chainConfig, evmtransaction.NewTransaction, blockstore)
+				chain, err := evm.SetupDefaultEVMChain(chainConfig, evmtransaction.NewTransaction, blockstore, nonceStore)
 				if err != nil {
 					panic(err)
 				}

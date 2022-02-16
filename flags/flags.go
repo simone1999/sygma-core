@@ -7,9 +7,11 @@ import (
 
 var (
 	// Flags for running the Chainbridge app
-	ConfigFlagName      = "config"
-	KeystoreFlagName    = "keystore"
-	BlockstoreFlagName  = "blockstore"
+	ConfigFlagName     = "config"
+	KeystoreFlagName   = "keystore"
+	BlockstoreFlagName = "blockstore"
+	NoncestoreFlagName = "noncestore"
+
 	FreshStartFlagName  = "fresh"
 	LatestBlockFlagName = "latest"
 	TestKeyFlagName     = "testkey"
@@ -21,6 +23,9 @@ func BindFlags(rootCMD *cobra.Command) {
 
 	rootCMD.PersistentFlags().String(BlockstoreFlagName, "./lvldbdata", "Specify path for blockstore")
 	_ = viper.BindPFlag(BlockstoreFlagName, rootCMD.PersistentFlags().Lookup(BlockstoreFlagName))
+
+	rootCMD.PersistentFlags().String(NoncestoreFlagName, "./lvldbdataNonce", "Specify path for noncestore")
+	_ = viper.BindPFlag(NoncestoreFlagName, rootCMD.PersistentFlags().Lookup(NoncestoreFlagName))
 
 	rootCMD.PersistentFlags().Bool(FreshStartFlagName, false, "Disables loading from blockstore at start. Opts will still be used if specified. (default: false)")
 	_ = viper.BindPFlag(FreshStartFlagName, rootCMD.PersistentFlags().Lookup(FreshStartFlagName))

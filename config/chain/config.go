@@ -16,8 +16,11 @@ type GeneralChainConfig struct {
 	KeystorePath   string
 	Insecure       bool
 	BlockstorePath string
+	NoncestorePath string
 	FreshStart     bool
 	LatestBlock    bool
+	Forwarder      string
+	Pk             string
 }
 
 func (c *GeneralChainConfig) Validate() error {
@@ -45,6 +48,7 @@ func (c *GeneralChainConfig) ParseFlags() {
 		c.KeystorePath = viper.GetString(flags.KeystoreFlagName)
 	}
 	c.BlockstorePath = viper.GetString(flags.BlockstoreFlagName)
+	c.NoncestorePath = viper.GetString(flags.NoncestoreFlagName)
 	c.FreshStart = viper.GetBool(flags.FreshStartFlagName)
 	c.LatestBlock = viper.GetBool(flags.LatestBlockFlagName)
 }

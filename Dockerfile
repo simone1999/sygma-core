@@ -10,6 +10,7 @@ RUN go build -o /bridge ./e2e/evm-evm/example/.
 
 # final stage
 FROM debian:stretch-slim
+COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 COPY --from=builder /bridge ./
 RUN chmod +x ./bridge
 

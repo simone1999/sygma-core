@@ -1,0 +1,38 @@
+{
+    "relayer": {},
+    "chains": [
+      {
+        "id": 5,
+        "from": "0x8e0a907331554AF72563Bd8D43051C2E64Be5d35",
+        "name": "rinkeby",
+        "type": "evm",
+        "endpoint": "https://rinkeby.infura.io/v3/2ac60765496b4057b8865b2e4e863c70",
+        "bridge": "0x9D4B7dE8F519E8Bf88D2c72b317a5e6C20755BDB",
+        "erc20Handler": "0xfeFdd93c967A5C546E27505Bf16f3449ba7cCccB",
+        "erc721Handler": "0xBB6F68eFc74ec9C0C91D8441aDBdD4a8eB664951",
+        "genericHandler": "0x9E07a855aE4514A0438D21bE5D08C3F746E8e6A8",
+        "gasLimit": 9000000,
+        "maxGasPrice": 20000000000,
+        "forwarder": "0xbA214f424d5584e8208DE4AcED7D8afcaaCddd22",
+        "blockConfirmations": 2,
+        "pk": "0000000000000000000000000000000000000000000000000000000000626f62"
+      },
+      {
+        "id": 4,
+        "from": "0x8e0a907331554AF72563Bd8D43051C2E64Be5d35",
+        "name": "goerli",
+        "type": "evm",
+        "endpoint": "https://goerli.infura.io/v3/2ac60765496b4057b8865b2e4e863c70",
+        "bridge": "0x1BA648d8F62fD2eEd57CECE710f4ba2d6351f38E",
+        "erc20Handler": "0x49837108267Aee0BB2F847fbB1e5B424cbaB39b8",
+        "erc721Handler": "0x8D832B20c4F8488A700B7508Cb5228872d666cb3",
+        "genericHandler": "0xE897a69B1B8E55F3d06260e420448f7B747Ed25E",
+        "gasLimit": 9000000,
+        "maxGasPrice": 20000000000,
+        "forwarder": "0xf2BbE2Ab6467Db7eC0038749588BD67c43E46C5A",
+        "blockConfirmations": 2,
+        "pk": "0000000000000000000000000000000000000000000000000000000000626f62"
+      }
+    ]
+  }
+  

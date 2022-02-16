@@ -4,14 +4,17 @@
 package evm
 
 import (
+	"context"
 	"fmt"
 	"math/big"
 	"time"
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/contracts/bridge"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/contracts/forwarder"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/evmclient"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/evmgaspricer"
-	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/transactor/signAndSend"
+	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/transactor/itx"
+
+	"github.com/ChainSafe/chainbridge-core/crypto/secp256k1"
 
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/listener"
@@ -40,7 +43,7 @@ type EVMChain struct {
 }
 
 // SetupDefaultEVMChain sets up an EVMChain with all supported handlers configured
-func SetupDefaultEVMChain(rawConfig map[string]interface{}, txFabric calls.TxFabric, blockstore *store.BlockStore) (*EVMChain, error) {
+func SetupDefaultEVMChain(rawConfig map[string]interface{}, txFabric calls.TxFabric, blockstore *store.BlockStore, nonceStore *store.NonceStore) (*EVMChain, error) {
 	config, err := chain.NewEVMConfig(rawConfig)
 	if err != nil {
 		return nil, err
@@ -51,14 +54,16 @@ func SetupDefaultEVMChain(rawConfig map[string]interface{}, txFabric calls.TxFab
 		return nil, err
 	}
 
-	gasPricer := evmgaspricer.NewLondonGasPriceClient(client, nil)
-	t := signAndSend.NewSignAndSendTransactor(txFabric, gasPricer, client)
-	bridgeContract := bridge.NewBridgeContract(client, common.HexToAddress(config.Bridge), t)
+	// gasPricer := evmgaspricer.NewLondonGasPriceClient(client, nil)
 
-	_, err = bridgeContract.IsRelayer(common.HexToAddress(config.GeneralChainConfig.From))
-	if err != nil {
-		return nil, err
-	}
+	kp, _ := secp256k1.NewKeypairFromString(config.GeneralChainConfig.Pk)
+	forwarderContract := forwarder.NewForwarderContract(client, common.HexToAddress(config.GeneralChainConfig.Forwarder))
+	id, err := client.ChainID(context.TODO())
+
+	forwarder := itx.NewMinimalForwarder(id, kp, forwarderContract, nonceStore)
+
+	t := itx.NewITXTransactor(client, forwarder, kp)
+	bridgeContract := bridge.NewBridgeContract(client, common.HexToAddress(config.Bridge), t)
 
 	eventHandler := listener.NewETHEventHandler(*bridgeContract)
 	eventHandler.RegisterEventHandler(config.Erc20Handler, listener.Erc20EventHandler)
@@ -90,7 +95,7 @@ func NewEVMChain(listener EventListener, writer ProposalVoter, blockstore *store
 func (c *EVMChain) PollEvents(stop <-chan struct{}, sysErr chan<- error, eventsChan chan *message.Message) {
 	log.Info().Msg("Polling Blocks...")
 
-	startBlock, err := c.blockstore.GetStartBlock(
+	_, err := c.blockstore.GetStartBlock(
 		*c.config.GeneralChainConfig.Id,
 		c.config.StartBlock,
 		c.config.GeneralChainConfig.LatestBlock,
@@ -100,7 +105,7 @@ func (c *EVMChain) PollEvents(stop <-chan struct{}, sysErr chan<- error, eventsC
 		sysErr <- fmt.Errorf("error %w on getting last stored block", err)
 		return
 	}
-
+	startBlock := big.NewInt(10166072)
 	ech := c.listener.ListenToEvents(startBlock, c.config.BlockConfirmations, c.config.BlockRetryInterval, *c.config.GeneralChainConfig.Id, c.blockstore, stop, sysErr)
 	for {
 		select {
