@@ -12,9 +12,9 @@ import (
 type EVMConfig struct {
 	GeneralChainConfig GeneralChainConfig
 	Bridge             string
-	Erc20Handler       string
-	Erc721Handler      string
-	GenericHandler     string
+	Erc20Handlers      []string
+	Erc721Handlers     []string
+	GenericHandlers    []string
 	MaxGasPrice        *big.Int
 	GasMultiplier      *big.Float
 	GasLimit           *big.Int
@@ -25,16 +25,16 @@ type EVMConfig struct {
 
 type RawEVMConfig struct {
 	GeneralChainConfig `mapstructure:",squash"`
-	Bridge             string  `mapstructure:"bridge"`
-	Erc20Handler       string  `mapstructure:"erc20Handler"`
-	Erc721Handler      string  `mapstructure:"erc721Handler"`
-	GenericHandler     string  `mapstructure:"genericHandler"`
-	MaxGasPrice        int64   `mapstructure:"maxGasPrice"`
-	GasMultiplier      float64 `mapstructure:"gasMultiplier"`
-	GasLimit           int64   `mapstructure:"gasLimit"`
-	StartBlock         int64   `mapstructure:"startBlock"`
-	BlockConfirmations int64   `mapstructure:"blockConfirmations"`
-	BlockRetryInterval uint64  `mapstructure:"blockRetryInterval"`
+	Bridge             string   `mapstructure:"bridge"`
+	Erc20Handlers      []string `mapstructure:"erc20Handlers"`
+	Erc721Handlers     []string `mapstructure:"erc721Handlers"`
+	GenericHandlers    []string `mapstructure:"genericHandlers"`
+	MaxGasPrice        int64    `mapstructure:"maxGasPrice"`
+	GasMultiplier      float64  `mapstructure:"gasMultiplier"`
+	GasLimit           int64    `mapstructure:"gasLimit"`
+	StartBlock         int64    `mapstructure:"startBlock"`
+	BlockConfirmations int64    `mapstructure:"blockConfirmations"`
+	BlockRetryInterval uint64   `mapstructure:"blockRetryInterval"`
 }
 
 func (c *RawEVMConfig) Validate() error {
@@ -67,9 +67,9 @@ func NewEVMConfig(chainConfig map[string]interface{}) (*EVMConfig, error) {
 	c.GeneralChainConfig.ParseFlags()
 	config := &EVMConfig{
 		GeneralChainConfig: c.GeneralChainConfig,
-		Erc20Handler:       c.Erc20Handler,
-		Erc721Handler:      c.Erc721Handler,
-		GenericHandler:     c.GenericHandler,
+		Erc20Handlers:      c.Erc20Handlers,
+		Erc721Handlers:     c.Erc721Handlers,
+		GenericHandlers:    c.GenericHandlers,
 		Bridge:             c.Bridge,
 		BlockRetryInterval: consts.DefaultBlockRetryInterval,
 		GasLimit:           big.NewInt(consts.DefaultGasLimit),

@@ -56,16 +56,22 @@ func SetupDefaultEVMChain(rawConfig map[string]interface{}, txFabric calls.TxFab
 	bridgeContract := bridge.NewBridgeContract(client, common.HexToAddress(config.Bridge), t)
 
 	eventHandler := listener.NewETHEventHandler(*bridgeContract)
-	eventHandler.RegisterEventHandler(config.Erc20Handler, listener.Erc20EventHandler)
-	eventHandler.RegisterEventHandler(config.Erc721Handler, listener.Erc721EventHandler)
-	eventHandler.RegisterEventHandler(config.GenericHandler, listener.GenericEventHandler)
-	evmListener := listener.NewEVMListener(client, eventHandler, common.HexToAddress(config.Bridge))
-
 	mh := voter.NewEVMMessageHandler(*bridgeContract)
-	mh.RegisterMessageHandler(config.Erc20Handler, voter.ERC20MessageHandler)
-	mh.RegisterMessageHandler(config.Erc721Handler, voter.ERC721MessageHandler)
-	mh.RegisterMessageHandler(config.GenericHandler, voter.GenericMessageHandler)
 
+	for _, erc20HandlerContract := range config.Erc20Handlers {
+		eventHandler.RegisterEventHandler(erc20HandlerContract, listener.Erc20EventHandler)
+		mh.RegisterMessageHandler(erc20HandlerContract, voter.ERC20MessageHandler)
+	}
+	for _, erc721HandlerContract := range config.Erc721Handlers {
+		eventHandler.RegisterEventHandler(erc721HandlerContract, listener.Erc721EventHandler)
+		mh.RegisterMessageHandler(erc721HandlerContract, voter.ERC721MessageHandler)
+	}
+	for _, genericHandlerContract := range config.GenericHandlers {
+		eventHandler.RegisterEventHandler(genericHandlerContract, listener.GenericEventHandler)
+		mh.RegisterMessageHandler(genericHandlerContract, voter.GenericMessageHandler)
+	}
+
+	evmListener := listener.NewEVMListener(client, eventHandler, common.HexToAddress(config.Bridge))
 	var evmVoter *voter.EVMVoter
 	evmVoter, err = voter.NewVoterWithSubscription(mh, client, bridgeContract)
 	if err != nil {
