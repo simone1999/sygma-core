@@ -77,6 +77,11 @@ func Erc20EventHandler(sourceID, destId uint8, nonce uint64, resourceID types.Re
 	// amount: first 32 bytes of calldata
 	amount := calldata[:32]
 
+	if len(handlerResponse) == 32 {
+		// for fee handling ERC20Handler can return a new amount, which is the amount to transfer after fees
+		amount = handlerResponse[:32]
+	}
+
 	// lenRecipientAddress: second 32 bytes of calldata [32:64]
 	// does not need to be derived because it is being calculated
 	// within ERC20MessageHandler
