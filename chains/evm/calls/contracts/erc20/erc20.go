@@ -37,6 +37,16 @@ func (c *ERC20Contract) GetBalance(address common.Address) (*big.Int, error) {
 	return b, nil
 }
 
+func (c *ERC20Contract) GetDecimals() (*uint8, error) {
+	log.Debug().Msg("Getting token decimals")
+	res, err := c.CallContract("decimals")
+	if err != nil {
+		return nil, err
+	}
+	b := abi.ConvertType(res[0], new(uint8)).(*uint8)
+	return b, nil
+}
+
 func (c *ERC20Contract) MintTokens(
 	to common.Address,
 	amount *big.Int,

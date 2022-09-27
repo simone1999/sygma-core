@@ -5,6 +5,7 @@ package relayer
 
 import (
 	"fmt"
+	"github.com/ChainSafe/chainbridge-core/relayer/messageprocessors"
 
 	"github.com/ChainSafe/chainbridge-core/relayer/message"
 	"github.com/rs/zerolog/log"
@@ -20,7 +21,7 @@ type RelayedChain interface {
 	DomainID() uint8
 }
 
-func NewRelayer(chains []RelayedChain, metrics Metrics, messageProcessors ...message.MessageProcessor) *Relayer {
+func NewRelayer(chains []RelayedChain, metrics Metrics, messageProcessors ...messageprocessors.MessageProcessor) *Relayer {
 	return &Relayer{relayedChains: chains, messageProcessors: messageProcessors, metrics: metrics}
 }
 
@@ -28,7 +29,7 @@ type Relayer struct {
 	metrics           Metrics
 	relayedChains     []RelayedChain
 	registry          map[uint8]RelayedChain
-	messageProcessors []message.MessageProcessor
+	messageProcessors []messageprocessors.MessageProcessor
 }
 
 // Start function starts the relayer. Relayer routine is starting all the chains

@@ -2,6 +2,7 @@ package relayer
 
 import (
 	"fmt"
+	"github.com/ChainSafe/chainbridge-core/relayer/messageprocessors"
 	"math/big"
 	"testing"
 
@@ -49,7 +50,7 @@ func (s *RouteTestSuite) TestAdjustDecimalsForERC20AmountMessageProcessor() {
 			a.Bytes(), // 145.5567 tokens
 		},
 	}
-	err := message.AdjustDecimalsForERC20AmountMessageProcessor(map[uint8]uint64{1: 18, 2: 2})(msg)
+	err := messageprocessors.AdjustDecimalsForERC20AmountMessageProcessor(map[uint8]uint64{1: 18, 2: 2})(msg)
 	s.Nil(err)
 	amount := new(big.Int).SetBytes(msg.Payload[0].([]byte))
 	if amount.Cmp(big.NewInt(14555)) != 0 {
