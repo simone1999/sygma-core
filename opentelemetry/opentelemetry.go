@@ -49,5 +49,5 @@ func (t *OpenTelemetry) TrackDepositMessage(m *message.Message) {
 type ConsoleTelemetry struct{}
 
 func (t *ConsoleTelemetry) TrackDepositMessage(m *message.Message) {
-	log.Info().Msgf("Deposit message: %+v", m)
+	log.Info().Msgf("Deposit message: %v", m.String())
 }

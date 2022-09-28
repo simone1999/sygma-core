@@ -72,10 +72,10 @@ func (r *Relayer) route(m *message.Message) {
 		}
 	}
 
-	log.Debug().Msgf("Sending message %+v to destination %v", m, m.Destination)
+	log.Debug().Msgf("Sending message %v to destination %v", m.String(), m.Destination)
 
 	if err := destChain.Write(m); err != nil {
-		log.Error().Err(err).Msgf("writing message %+v", m)
+		log.Error().Err(err).Msgf("writing message %v", m.String())
 		return
 	}
 }

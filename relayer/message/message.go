@@ -5,6 +5,7 @@ package message
 
 import (
 	"errors"
+	"fmt"
 	"math/big"
 
 	"github.com/ChainSafe/chainbridge-core/types"
@@ -44,6 +45,12 @@ type Message struct {
 	ResourceId   types.ResourceID
 	Payload      []interface{} // data associated with event sequence
 	Type         TransferType
+}
+
+func (m *Message) String() string {
+	return fmt.Sprintf(
+		"Source: %v, Destination: %v, DepositNonce: %v, ResourceId: %X, Payload: %X, Type: %v",
+		m.Source, m.Destination, m.DepositNonce, m.ResourceId, m.Payload, m.Type)
 }
 
 // extractAmountTransferred is a private method to extract and transform the transfer amount
