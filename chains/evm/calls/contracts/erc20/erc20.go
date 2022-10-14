@@ -39,6 +39,10 @@ func (c *ERC20Contract) GetBalance(address common.Address) (*big.Int, error) {
 
 func (c *ERC20Contract) GetDecimals() (*uint8, error) {
 	log.Debug().Msg("Getting token decimals")
+	if *c.ContractAddress() == ([20]byte{0}) {
+		decimals := uint8(18)
+		return &decimals, nil
+	}
 	res, err := c.CallContract("decimals")
 	if err != nil {
 		return nil, err

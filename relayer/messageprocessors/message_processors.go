@@ -188,14 +188,12 @@ func AdjustDecimalsForERC20AmountMessageAutoProcessor(args ...interface{}) Messa
 			roundedAmount.Div(amount, big.NewInt(0).Exp(big.NewInt(10), big.NewInt(0).SetUint64(uint64(diff)), nil))
 			log.Info().Msgf("amount %s rounded to %s from chain %v to chain %v", amount.String(), roundedAmount.String(), m.Source, m.Destination)
 			m.Payload[0] = roundedAmount.Bytes()
-			return nil
-		}
-		if sourceDecimal < destDecimal {
+		} else if sourceDecimal < destDecimal {
 			diff := destDecimal - sourceDecimal
 			roundedAmount := big.NewInt(0)
 			roundedAmount.Mul(amount, big.NewInt(0).Exp(big.NewInt(10), big.NewInt(0).SetUint64(uint64(diff)), nil))
-			m.Payload[0] = roundedAmount.Bytes()
 			log.Info().Msgf("amount %s rounded to %s from chain %v to chain %v", amount.String(), roundedAmount.String(), m.Source, m.Destination)
+			m.Payload[0] = roundedAmount.Bytes()
 		}
 		return nil
 	}
