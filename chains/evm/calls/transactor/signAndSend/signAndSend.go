@@ -62,8 +62,17 @@ func (t *signAndSendTransactor) Transact(to *common.Address, data []byte, opts t
 		return &common.Hash{}, err
 	}
 
-	_, err = t.client.WaitAndReturnTxReceipt(h)
+	receipt, err := t.client.WaitAndReturnTxReceipt(h)
+
 	if err != nil {
+		if receipt != nil {
+			// even in case of failed tx, wallet nonce needs to be incremented,
+			// only no incrementation in case of tx did not occur
+			errInner := t.client.UnsafeIncreaseNonce()
+			if errInner != nil {
+				log.Error().Err(errInner)
+			}
+		}
 		return &common.Hash{}, err
 	}
 

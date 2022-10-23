@@ -271,14 +271,20 @@ func (c *EVMClient) UnlockNonce() {
 func (c *EVMClient) UnsafeNonce() (*big.Int, error) {
 	var err error
 	for i := 0; i <= 10; i++ {
-		if c.nonce == nil {
-			nonce, err := c.PendingNonceAt(context.Background(), c.kp.CommonAddress())
-			if err != nil {
-				time.Sleep(1 * time.Second)
-				continue
+		nonceInt, err := c.PendingNonceAt(context.Background(), c.kp.CommonAddress())
+		nonce := big.NewInt(0).SetUint64(nonceInt)
+		if err != nil {
+			time.Sleep(1 * time.Second)
+			continue
+		}
+		if c.nonce != nil {
+			if nonce.Cmp(c.nonce) == -1 {
+				nonce = c.nonce
+			} else if nonce.Cmp(c.nonce) == 1 {
+				c.nonce = nonce
 			}
-			c.nonce = big.NewInt(0).SetUint64(nonce)
-			return c.nonce, nil
+		} else {
+			c.nonce = nonce
 		}
 		return c.nonce, nil
 	}
