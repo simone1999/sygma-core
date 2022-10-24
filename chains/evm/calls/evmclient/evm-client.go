@@ -280,8 +280,6 @@ func (c *EVMClient) UnsafeNonce() (*big.Int, error) {
 		if c.nonce != nil {
 			if nonce.Cmp(c.nonce) == -1 {
 				nonce = c.nonce
-			} else if nonce.Cmp(c.nonce) == 1 {
-				c.nonce = nonce
 			}
 		} else {
 			c.nonce = nonce
