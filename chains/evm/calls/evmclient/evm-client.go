@@ -271,31 +271,19 @@ func (c *EVMClient) UnlockNonce() {
 func (c *EVMClient) UnsafeNonce() (*big.Int, error) {
 	var err error
 	for i := 0; i <= 10; i++ {
-		nonceInt, err := c.PendingNonceAt(context.Background(), c.kp.CommonAddress())
-		nonce := big.NewInt(0).SetUint64(nonceInt)
+		nonce, err := c.PendingNonceAt(context.Background(), c.kp.CommonAddress())
 		if err != nil {
 			time.Sleep(1 * time.Second)
 			continue
 		}
-		if c.nonce != nil {
-			if nonce.Cmp(c.nonce) == -1 {
-				nonce = c.nonce
-			}
-		} else {
-			c.nonce = nonce
-		}
+		c.nonce = big.NewInt(0).SetUint64(nonce)
 		return c.nonce, nil
 	}
 	return nil, err
 }
 
 func (c *EVMClient) UnsafeIncreaseNonce() error {
-	nonce, err := c.UnsafeNonce()
-	if err != nil {
-		return err
-	}
-	c.nonce = nonce.Add(nonce, big.NewInt(1))
-	return nil
+	return errors.New("nonce not incremented manually anymore")
 }
 
 func (c *EVMClient) BaseFee() (*big.Int, error) {
