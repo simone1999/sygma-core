@@ -58,6 +58,15 @@ type DepositLogs struct {
 	HandlerResponse []byte
 }
 
+type DepositLogsEnriched struct {
+	// Deposit Logs
+	DepositLogs
+	// DepositTxHash
+	DepositTxHash common.Hash
+	// Deposit Block
+	DepositBlock uint64
+}
+
 type CommonTransaction interface {
 	// Hash returns the transaction hash.
 	Hash() common.Hash
@@ -162,12 +171,12 @@ func (c *EVMClient) GetTransactionByHash(h common.Hash) (tx *types.Transaction, 
 	return c.Client.TransactionByHash(context.Background(), h)
 }
 
-func (c *EVMClient) FetchDepositLogs(ctx context.Context, contractAddress common.Address, startBlock *big.Int, endBlock *big.Int) ([]*DepositLogs, error) {
+func (c *EVMClient) FetchDepositLogs(ctx context.Context, contractAddress common.Address, startBlock *big.Int, endBlock *big.Int) ([]*DepositLogsEnriched, error) {
 	logs, err := c.FilterLogs(ctx, buildQuery(contractAddress, string(util.Deposit), startBlock, endBlock))
 	if err != nil {
 		return nil, err
 	}
-	depositLogs := make([]*DepositLogs, 0)
+	depositLogs := make([]*DepositLogsEnriched, 0)
 
 	abi, err := abi.JSON(strings.NewReader(consts.BridgeABI))
 	if err != nil {
@@ -176,13 +185,18 @@ func (c *EVMClient) FetchDepositLogs(ctx context.Context, contractAddress common
 
 	for _, l := range logs {
 		dl, err := c.UnpackDepositEventLog(abi, l.Data)
+		dlEnriched := DepositLogsEnriched{
+			*dl,
+			l.TxHash,
+			l.BlockNumber,
+		}
 		if err != nil {
 			log.Error().Msgf("failed unpacking deposit event log: %v", err)
 			continue
 		}
 		log.Debug().Msgf("Found deposit log in block: %d, TxHash: %s, contractAddress: %s, sender: %s", l.BlockNumber, l.TxHash, l.Address, dl.SenderAddress)
 
-		depositLogs = append(depositLogs, dl)
+		depositLogs = append(depositLogs, &dlEnriched)
 	}
 
 	return depositLogs, nil

@@ -55,10 +55,10 @@ func (mr *MockChainClientMockRecorder) CallContract(ctx, callArgs, blockNumber i
 }
 
 // FetchDepositLogs mocks base method.
-func (m *MockChainClient) FetchDepositLogs(ctx context.Context, address common.Address, startBlock, endBlock *big.Int) ([]*evmclient.DepositLogs, error) {
+func (m *MockChainClient) FetchDepositLogs(ctx context.Context, address common.Address, startBlock, endBlock *big.Int) ([]*evmclient.DepositLogsEnriched, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "FetchDepositLogs", ctx, address, startBlock, endBlock)
-	ret0, _ := ret[0].([]*evmclient.DepositLogs)
+	ret0, _ := ret[0].([]*evmclient.DepositLogsEnriched)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -108,7 +108,7 @@ func (m *MockEventHandler) EXPECT() *MockEventHandlerMockRecorder {
 }
 
 // HandleEvent mocks base method.
-func (m *MockEventHandler) HandleEvent(sourceID, destID uint8, nonce uint64, resourceID types.ResourceID, calldata, handlerResponse []byte) (*message.Message, error) {
+func (m *MockEventHandler) HandleEvent(sourceID, destID uint8, nonce uint64, resourceID types.ResourceID, calldata, handlerResponse []byte, depositTxHash common.Hash, depositBlock uint64) (*message.Message, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "HandleEvent", sourceID, destID, nonce, resourceID, calldata, handlerResponse)
 	ret0, _ := ret[0].(*message.Message)

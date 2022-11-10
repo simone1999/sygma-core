@@ -19,11 +19,11 @@ import (
 )
 
 type EventHandler interface {
-	HandleEvent(sourceID, destID uint8, nonce uint64, resourceID types.ResourceID, calldata, handlerResponse []byte) (*message.Message, error)
+	HandleEvent(sourceID, destID uint8, nonce uint64, resourceID types.ResourceID, calldata, handlerResponse []byte, depositTxHash common.Hash, depositBlock uint64) (*message.Message, error)
 }
 type ChainClient interface {
 	LatestBlock() (*big.Int, error)
-	FetchDepositLogs(ctx context.Context, address common.Address, startBlock *big.Int, endBlock *big.Int) ([]*evmclient.DepositLogs, error)
+	FetchDepositLogs(ctx context.Context, address common.Address, startBlock *big.Int, endBlock *big.Int) ([]*evmclient.DepositLogsEnriched, error)
 	CallContract(ctx context.Context, callArgs map[string]interface{}, blockNumber *big.Int) ([]byte, error)
 }
 
@@ -80,7 +80,7 @@ func (l *EVMListener) ListenToEvents(
 				}
 				for _, eventLog := range logs {
 					log.Debug().Msgf("Deposit log found from sender: %s in block: %s with  destinationDomainId: %v, resourceID: %X, depositNonce: %v", eventLog.SenderAddress, startBlock.String(), eventLog.DestinationDomainID, eventLog.ResourceID[:], eventLog.DepositNonce)
-					m, err := l.eventHandler.HandleEvent(domainID, eventLog.DestinationDomainID, eventLog.DepositNonce, eventLog.ResourceID, eventLog.Data, eventLog.HandlerResponse)
+					m, err := l.eventHandler.HandleEvent(domainID, eventLog.DestinationDomainID, eventLog.DepositNonce, eventLog.ResourceID, eventLog.Data, eventLog.HandlerResponse, eventLog.DepositTxHash, eventLog.DepositBlock)
 					if err != nil {
 						log.Error().Str("block", startBlock.String()).Uint8("domainID", domainID).Msgf("%v", err)
 					} else {

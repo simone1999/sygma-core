@@ -6,6 +6,7 @@ package message
 import (
 	"errors"
 	"fmt"
+	"github.com/ethereum/go-ethereum/common"
 	"math/big"
 
 	"github.com/ChainSafe/chainbridge-core/types"
@@ -39,12 +40,14 @@ var (
 )
 
 type Message struct {
-	Source       uint8  // Source where message was initiated
-	Destination  uint8  // Destination chain of message
-	DepositNonce uint64 // Nonce for the deposit
-	ResourceId   types.ResourceID
-	Payload      []interface{} // data associated with event sequence
-	Type         TransferType
+	DepositTxHash common.Hash // transaction hash of the deposit transaction
+	DepositBlock  uint64      // Block the Deposit transaction were made
+	Source        uint8       // Source where message was initiated
+	Destination   uint8       // Destination chain of message
+	DepositNonce  uint64      // Nonce for the deposit
+	ResourceId    types.ResourceID
+	Payload       []interface{} // data associated with event sequence
+	Type          TransferType
 }
 
 func (m *Message) String() string {

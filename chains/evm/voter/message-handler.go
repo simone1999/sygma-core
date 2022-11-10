@@ -69,15 +69,15 @@ func (mh *EVMMessageHandler) RegisterMessageHandler(address string, handler Mess
 	mh.handlers[common.HexToAddress(address)] = handler
 }
 
-func ERC20MessageHandler(m *message.Message, handlerAddr, bridgeAddress common.Address) (*proposal.Proposal, error) {
-	if len(m.Payload) != 2 {
+func ERC20MessageHandler(msg *message.Message, handlerAddr, bridgeAddress common.Address) (*proposal.Proposal, error) {
+	if len(msg.Payload) != 2 {
 		return nil, errors.New("malformed payload. Len  of payload should be 2")
 	}
-	amount, ok := m.Payload[0].([]byte)
+	amount, ok := msg.Payload[0].([]byte)
 	if !ok {
 		return nil, errors.New("wrong payloads amount format")
 	}
-	recipient, ok := m.Payload[1].([]byte)
+	recipient, ok := msg.Payload[1].([]byte)
 	if !ok {
 		return nil, errors.New("wrong payloads recipient format")
 	}
@@ -86,7 +86,7 @@ func ERC20MessageHandler(m *message.Message, handlerAddr, bridgeAddress common.A
 	recipientLen := big.NewInt(int64(len(recipient))).Bytes()
 	data = append(data, common.LeftPadBytes(recipientLen, 32)...) // length of recipient (uint256)
 	data = append(data, recipient...)                             // recipient ([]byte)
-	return proposal.NewProposal(m.Source, m.DepositNonce, m.ResourceId, data, handlerAddr, bridgeAddress), nil
+	return proposal.NewProposal(msg.Source, msg.DepositNonce, msg.ResourceId, data, handlerAddr, bridgeAddress, msg.DepositTxHash, msg.DepositBlock), nil
 }
 
 func ERC721MessageHandler(msg *message.Message, handlerAddr, bridgeAddress common.Address) (*proposal.Proposal, error) {
@@ -113,7 +113,7 @@ func ERC721MessageHandler(msg *message.Message, handlerAddr, bridgeAddress commo
 	metadataLen := big.NewInt(int64(len(metadata))).Bytes()
 	data.Write(common.LeftPadBytes(metadataLen, 32))
 	data.Write(metadata)
-	return proposal.NewProposal(msg.Source, msg.DepositNonce, msg.ResourceId, data.Bytes(), handlerAddr, bridgeAddress), nil
+	return proposal.NewProposal(msg.Source, msg.DepositNonce, msg.ResourceId, data.Bytes(), handlerAddr, bridgeAddress, msg.DepositTxHash, msg.DepositBlock), nil
 }
 
 func GenericMessageHandler(msg *message.Message, handlerAddr, bridgeAddress common.Address) (*proposal.Proposal, error) {
@@ -128,5 +128,5 @@ func GenericMessageHandler(msg *message.Message, handlerAddr, bridgeAddress comm
 	metadataLen := big.NewInt(int64(len(metadata))).Bytes()
 	data.Write(common.LeftPadBytes(metadataLen, 32)) // length of metadata (uint256)
 	data.Write(metadata)
-	return proposal.NewProposal(msg.Source, msg.DepositNonce, msg.ResourceId, data.Bytes(), handlerAddr, bridgeAddress), nil
+	return proposal.NewProposal(msg.Source, msg.DepositNonce, msg.ResourceId, data.Bytes(), handlerAddr, bridgeAddress, msg.DepositTxHash, msg.DepositBlock), nil
 }

@@ -12,7 +12,7 @@ import (
 )
 
 type EventHandlers map[common.Address]EventHandlerFunc
-type EventHandlerFunc func(sourceID, destId uint8, nonce uint64, resourceID types.ResourceID, calldata, handlerResponse []byte) (*message.Message, error)
+type EventHandlerFunc func(sourceID, destId uint8, nonce uint64, resourceID types.ResourceID, calldata, handlerResponse []byte, depositTxHash common.Hash, depositBlock uint64) (*message.Message, error)
 
 type ETHEventHandler struct {
 	bridgeContract bridge.BridgeContract
@@ -27,7 +27,7 @@ func NewETHEventHandler(bridgeContract bridge.BridgeContract) *ETHEventHandler {
 	}
 }
 
-func (e *ETHEventHandler) HandleEvent(sourceID, destID uint8, depositNonce uint64, resourceID types.ResourceID, calldata, handlerResponse []byte) (*message.Message, error) {
+func (e *ETHEventHandler) HandleEvent(sourceID, destID uint8, depositNonce uint64, resourceID types.ResourceID, calldata, handlerResponse []byte, depositTxHash common.Hash, depositBlock uint64) (*message.Message, error) {
 	handlerAddr, err := e.bridgeContract.GetHandlerAddressForResourceID(resourceID)
 	if err != nil {
 		return nil, err
@@ -38,7 +38,7 @@ func (e *ETHEventHandler) HandleEvent(sourceID, destID uint8, depositNonce uint6
 		return nil, err
 	}
 
-	return eventHandler(sourceID, destID, depositNonce, resourceID, calldata, handlerResponse)
+	return eventHandler(sourceID, destID, depositNonce, resourceID, calldata, handlerResponse, depositTxHash, depositBlock)
 }
 
 // matchAddressWithHandlerFunc matches a handler address with an associated handler function
@@ -67,7 +67,7 @@ func (e *ETHEventHandler) RegisterEventHandler(handlerAddress string, handler Ev
 
 // Erc20EventHandler converts data pulled from event logs into message
 // handlerResponse can be an empty slice
-func Erc20EventHandler(sourceID, destId uint8, nonce uint64, resourceID types.ResourceID, calldata, handlerResponse []byte) (*message.Message, error) {
+func Erc20EventHandler(sourceID, destId uint8, nonce uint64, resourceID types.ResourceID, calldata, handlerResponse []byte, depositTxHash common.Hash, depositBlock uint64) (*message.Message, error) {
 	if len(calldata) < 84 {
 		err := errors.New("invalid calldata length: less than 84 bytes")
 		return nil, err
@@ -91,11 +91,13 @@ func Erc20EventHandler(sourceID, destId uint8, nonce uint64, resourceID types.Re
 	recipientAddress := calldata[64:]
 
 	return &message.Message{
-		Source:       sourceID,
-		Destination:  destId,
-		DepositNonce: nonce,
-		ResourceId:   resourceID,
-		Type:         message.FungibleTransfer,
+		DepositTxHash: depositTxHash,
+		DepositBlock:  depositBlock,
+		Source:        sourceID,
+		Destination:   destId,
+		DepositNonce:  nonce,
+		ResourceId:    resourceID,
+		Type:          message.FungibleTransfer,
 		Payload: []interface{}{
 			amount,
 			recipientAddress,
@@ -104,7 +106,7 @@ func Erc20EventHandler(sourceID, destId uint8, nonce uint64, resourceID types.Re
 }
 
 // GenericEventHandler converts data pulled from generic deposit event logs into message
-func GenericEventHandler(sourceID, destId uint8, nonce uint64, resourceID types.ResourceID, calldata, handlerResponse []byte) (*message.Message, error) {
+func GenericEventHandler(sourceID, destId uint8, nonce uint64, resourceID types.ResourceID, calldata, handlerResponse []byte, depositTxHash common.Hash, depositBlock uint64) (*message.Message, error) {
 	if len(calldata) < 32 {
 		err := errors.New("invalid calldata length: less than 32 bytes")
 		return nil, err
@@ -114,11 +116,13 @@ func GenericEventHandler(sourceID, destId uint8, nonce uint64, resourceID types.
 	metadata := calldata[32:]
 
 	return &message.Message{
-		Source:       sourceID,
-		Destination:  destId,
-		DepositNonce: nonce,
-		ResourceId:   resourceID,
-		Type:         message.GenericTransfer,
+		DepositTxHash: depositTxHash,
+		DepositBlock:  depositBlock,
+		Source:        sourceID,
+		Destination:   destId,
+		DepositNonce:  nonce,
+		ResourceId:    resourceID,
+		Type:          message.GenericTransfer,
 		Payload: []interface{}{
 			metadata,
 		},
@@ -126,7 +130,7 @@ func GenericEventHandler(sourceID, destId uint8, nonce uint64, resourceID types.
 }
 
 // Erc721EventHandler converts data pulled from ERC721 deposit event logs into message
-func Erc721EventHandler(sourceID, destId uint8, nonce uint64, resourceID types.ResourceID, calldata, handlerResponse []byte) (*message.Message, error) {
+func Erc721EventHandler(sourceID, destId uint8, nonce uint64, resourceID types.ResourceID, calldata, handlerResponse []byte, depositTxHash common.Hash, depositBlock uint64) (*message.Message, error) {
 	if len(calldata) < 64 {
 		err := errors.New("invalid calldata length: less than 84 bytes")
 		return nil, err
@@ -154,11 +158,13 @@ func Erc721EventHandler(sourceID, destId uint8, nonce uint64, resourceID types.R
 	}
 
 	return &message.Message{
-		Source:       sourceID,
-		Destination:  destId,
-		DepositNonce: nonce,
-		ResourceId:   resourceID,
-		Type:         message.NonFungibleTransfer,
+		DepositTxHash: depositTxHash,
+		DepositBlock:  depositBlock,
+		Source:        sourceID,
+		Destination:   destId,
+		DepositNonce:  nonce,
+		ResourceId:    resourceID,
+		Type:          message.NonFungibleTransfer,
 		Payload: []interface{}{
 			tokenId,
 			recipientAddress,
