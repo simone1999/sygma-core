@@ -71,7 +71,13 @@ func (l *EVMListener) ListenToEvents(
 					continue
 				}
 
-				logs, err := l.chainReader.FetchDepositLogs(context.Background(), l.bridgeAddress, startBlock, startBlock)
+				// send endBlock to min(latest - BlockDelay, current + 99)
+				endBlock := big.NewInt(0).Sub(head, blockDelay)
+				if big.NewInt(0).Sub(endBlock, startBlock).Cmp(big.NewInt(99)) == 1 {
+					endBlock.Add(startBlock, big.NewInt(99))
+				}
+
+				logs, err := l.chainReader.FetchDepositLogs(context.Background(), l.bridgeAddress, startBlock, endBlock)
 				if err != nil {
 					// Filtering logs error really can appear only on wrong configuration or temporary network problem
 					// so i do no see any reason to break execution
@@ -79,27 +85,27 @@ func (l *EVMListener) ListenToEvents(
 					continue
 				}
 				for _, eventLog := range logs {
-					log.Debug().Msgf("Deposit log found from sender: %s in block: %s with  destinationDomainId: %v, resourceID: %X, depositNonce: %v", eventLog.SenderAddress, startBlock.String(), eventLog.DestinationDomainID, eventLog.ResourceID[:], eventLog.DepositNonce)
+					log.Debug().Msgf("Deposit log found from sender: %s in block: %v with  destinationDomainId: %v, resourceID: %X, depositNonce: %v", eventLog.SenderAddress, eventLog.DepositBlock, eventLog.DestinationDomainID, eventLog.ResourceID[:], eventLog.DepositNonce)
 					m, err := l.eventHandler.HandleEvent(domainID, eventLog.DestinationDomainID, eventLog.DepositNonce, eventLog.ResourceID, eventLog.Data, eventLog.HandlerResponse, eventLog.DepositTxHash, eventLog.DepositBlock)
 					if err != nil {
-						log.Error().Str("block", startBlock.String()).Uint8("domainID", domainID).Msgf("%v", err)
+						log.Error().Str("startBlock", startBlock.String()).Str("endBlock", endBlock.String()).Uint8("domainID", domainID).Msgf("%v", err)
 					} else {
-						log.Debug().Msgf("Resolved message %v in block %s", m.String(), startBlock.String())
+						log.Debug().Msgf("Resolved message %v in block %v", m.String(), eventLog.DepositBlock)
 						ch <- m
 					}
 				}
-				if startBlock.Int64()%20 == 0 {
+				if startBlock.Int64()%20 == 0 || startBlock.Int64()/20 != endBlock.Int64()/20 {
 					// Logging process every 20 bocks to exclude spam
-					log.Debug().Str("block", startBlock.String()).Uint8("domainID", domainID).Msg("Queried block for deposit events")
+					log.Debug().Int64("block", endBlock.Int64()/20*20).Uint8("domainID", domainID).Msg("Queried block for deposit events")
 				}
 				// TODO: We can store blocks to DB inside listener or make listener send something to channel each block to save it.
 				//Write to block store. Not a critical operation, no need to retry
-				err = blockstore.StoreBlock(startBlock, domainID)
+				err = blockstore.StoreBlock(endBlock, domainID)
 				if err != nil {
-					log.Error().Str("block", startBlock.String()).Err(err).Msg("Failed to write latest block to blockstore")
+					log.Error().Str("block", endBlock.String()).Err(err).Msg("Failed to write latest block to blockstore")
 				}
-				// Goto next block
-				startBlock.Add(startBlock, big.NewInt(1))
+				// Goto next blocks
+				startBlock.Add(endBlock, big.NewInt(1))
 			}
 		}
 	}()
