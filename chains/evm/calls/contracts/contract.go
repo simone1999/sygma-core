@@ -70,7 +70,7 @@ func (c *Contract) ExecuteTransaction(method string, opts transactor.TransactOpt
 			Str("contract", c.contractAddress.String()).
 			Err(err).
 			Msgf("error on executing %s", method)
-		return nil, err
+		return h, err
 	}
 	log.Debug().
 		Str("txHash", h.String()).
