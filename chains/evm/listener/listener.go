@@ -56,7 +56,7 @@ func (l *EVMListener) ListenToEvents(
 			default:
 				head, err := l.chainReader.LatestBlock()
 				if err != nil {
-					log.Error().Err(err).Msg("Unable to get latest block")
+					log.Error().Err(err).Msg("Unable to get latest block for DomainId " + string(domainID))
 					time.Sleep(blockRetryInterval)
 					continue
 				}
