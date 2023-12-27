@@ -9,6 +9,7 @@ import (
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/consts"
 	"github.com/ChainSafe/chainbridge-core/chains/evm/calls/transactor"
+	"github.com/ChainSafe/chainbridge-core/config/chain"
 	"math/big"
 	"math/rand"
 	"strings"
@@ -101,7 +102,7 @@ func NewVoter(mh MessageHandler, client ChainClient, bridgeContract BridgeContra
 
 // VoteProposal checks if relayer already voted and is threshold
 // satisfied and casts a vote if it isn't.
-func (v *EVMVoter) VoteProposal(m *message.Message) error {
+func (v *EVMVoter) VoteProposal(m *message.Message, chainConfig *chain.EVMConfig) error {
 	prop, err := v.mh.HandleMessage(m)
 	if err != nil {
 		return err
@@ -131,7 +132,9 @@ func (v *EVMVoter) VoteProposal(m *message.Message) error {
 		return err
 	}
 
-	hash, err := v.bridgeContract.VoteProposal(prop, transactor.TransactOptions{})
+	transactOptions := transactor.TransactOptions{GasLimit: chainConfig.GasLimit.Uint64()}
+
+	hash, err := v.bridgeContract.VoteProposal(prop, transactOptions)
 	if err != nil {
 		return fmt.Errorf("voting failed. Err: %w", err)
 	}
