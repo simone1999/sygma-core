@@ -33,7 +33,7 @@ type Proposal struct {
 
 // GetDataHash constructs and returns proposal data hash
 func (p *Proposal) GetDataHash() common.Hash {
-	return crypto.Keccak256Hash(append(p.HandlerAddress.Bytes(), p.Data...))
+	return crypto.Keccak256Hash(append(p.ResourceId[:], p.Data...))
 }
 
 // GetID constructs proposal unique identifier
