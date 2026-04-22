@@ -55,10 +55,10 @@ func (l *EVMListener) ListenToEvents(
 			case <-stopChn:
 				return
 			default:
+				time.Sleep(blockRetryInterval)
 				head, err := l.chainReader.LatestBlock()
 				if err != nil {
 					log.Error().Err(err).Msg("Unable to get latest block for DomainId " + strconv.Itoa(int(domainID)))
-					time.Sleep(blockRetryInterval)
 					continue
 				}
 
@@ -68,7 +68,6 @@ func (l *EVMListener) ListenToEvents(
 
 				// Sleep if the difference is less than blockDelay; (latest - current) < BlockDelay
 				if big.NewInt(0).Sub(head, startBlock).Cmp(blockDelay) == -1 {
-					time.Sleep(blockRetryInterval)
 					continue
 				}
 
